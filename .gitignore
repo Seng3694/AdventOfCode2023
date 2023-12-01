@@ -69,3 +69,4 @@ dkms.conf
 
 #bin
 bin/
+.vscode/
