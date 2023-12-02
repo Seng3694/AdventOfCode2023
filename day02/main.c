@@ -13,6 +13,8 @@ typedef struct {
   u8 roundCount;
 } game;
 
+// could have just used an array because it's exactly 100 games
+// but this works better for test inputs of variable lengths
 #define AOC_T game
 #include <aoc/vector.h>
 
@@ -71,7 +73,7 @@ static u32 solve_part2(const aoc_vector_game *const games) {
   const game *const g = games->items;
   u32 solution = 0;
   for (size_t i = 0; i < games->length; ++i) {
-    u16 maxR = 0, maxG = 0, maxB = 0;
+    u8 maxR = 0, maxG = 0, maxB = 0;
     for (u8 j = 0; j < g[i].roundCount; ++j) {
       maxR = AOC_MAX(maxR, g[i].rounds[j].red);
       maxG = AOC_MAX(maxG, g[i].rounds[j].green);
