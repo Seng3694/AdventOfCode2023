@@ -48,7 +48,6 @@ typedef struct {
   u32 part1;
   // there are only around 200 used numbers
   u32 matches[0xff];
-  i32 counts[0xff];
   u32 cards;
 } context;
 
@@ -67,29 +66,20 @@ static void parse(char *line, context *const ctx, const size_t lineNumber) {
   ctx->cards++;
 }
 
-static u32 get_card_count(context *const ctx, const u32 id) {
-  if (ctx->counts[id] != -1)
-    return ctx->counts[id];
-
-  u32 sum = 1;
-  for (u32 i = 1; i <= ctx->matches[id]; ++i)
-    sum += get_card_count(ctx, id + i);
-
-  ctx->counts[id] = sum;
-  return sum;
-}
-
 static inline u32 solve(context *const ctx) {
-  u32 count = 0;
-  for (u32 i = 0; i < ctx->cards; ++i)
-    count += get_card_count(ctx, i);
-  return count;
+  u32 solution = 0;
+  u32 counts[0xff] = {0};
+  for (u32 i = ctx->cards; i > 0; --i) {
+    counts[i] = 1;
+    for (u32 j = 1; j <= ctx->matches[i]; ++j)
+      counts[i] += counts[i + j];
+    solution += counts[i];
+  }
+  return solution;
 }
 
 int main(void) {
   context ctx = {0};
-  memset(ctx.counts, -1, sizeof(u32) * 0xff);
   aoc_file_read_lines2("day04/input.txt", (aoc_line_num_func)parse, &ctx);
-  const u32 part2 = solve(&ctx);
-  printf("%u\n%u\n", ctx.part1, part2);
+  printf("%u\n%u\n", ctx.part1, solve(&ctx));
 }
