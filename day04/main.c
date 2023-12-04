@@ -1,7 +1,7 @@
 #include <aoc/aoc.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <string.h>
 
 static inline void set_bit(u32 bits[const 8], const size_t bit) {
   const size_t arrIndex = bit >> 5;
@@ -44,20 +44,52 @@ static char *parse_numbers(char *line, u64 numbers[const 4], const char end) {
   return line;
 }
 
+typedef struct {
+  u32 part1;
+  // there are only around 200 used numbers
+  u32 matches[0xff];
+  i32 counts[0xff];
+  u32 cards;
+} context;
+
 static u64 temp[4];
 
-static void parse(char *line, u32 *const part1) {
+static void parse(char *line, context *const ctx, const size_t lineNumber) {
   u64 win[4] = {0};
   u64 actual[4] = {0};
   line = skip_until(line, ':');
   line = parse_numbers(line, win, '|');
   line = parse_numbers(line, actual, '\n');
   and(temp, win, actual);
-  *part1 += (u32)pow(2, popcount((u32 *)temp) - 1);
+  const u32 matches = popcount((u32 *)temp);
+  ctx->matches[lineNumber + 1] = matches;
+  ctx->part1 += matches == 0 ? 0 : 1 << (matches - 1);
+  ctx->cards++;
+}
+
+static u32 get_card_count(context *const ctx, const u32 id) {
+  if (ctx->counts[id] != -1)
+    return ctx->counts[id];
+
+  u32 sum = 1;
+  for (u32 i = 1; i <= ctx->matches[id]; ++i)
+    sum += get_card_count(ctx, id + i);
+
+  ctx->counts[id] = sum;
+  return sum;
+}
+
+static inline u32 solve(context *const ctx) {
+  u32 count = 0;
+  for (u32 i = 0; i < ctx->cards; ++i)
+    count += get_card_count(ctx, i);
+  return count;
 }
 
 int main(void) {
-  u32 part1 = 0;
-  aoc_file_read_lines1("day04/input.txt", (aoc_line_func)parse, &part1);
-  printf("%u\n", part1);
+  context ctx = {0};
+  memset(ctx.counts, -1, sizeof(u32) * 0xff);
+  aoc_file_read_lines2("day04/input.txt", (aoc_line_num_func)parse, &ctx);
+  const u32 part2 = solve(&ctx);
+  printf("%u\n%u\n", ctx.part1, part2);
 }
