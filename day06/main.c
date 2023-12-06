@@ -12,8 +12,7 @@ static inline char *skip_spaces(char *str) {
   return str;
 }
 
-static void parse_part1(char *input, i64 times[const RACES],
-                        i64 distances[RACES]) {
+static void parse(char *input, i64 times[const RACES], i64 distances[RACES]) {
   input += 5;
   for (u8 i = 0; i < RACES; ++i) {
     input = skip_spaces(input);
@@ -24,25 +23,6 @@ static void parse_part1(char *input, i64 times[const RACES],
     input = skip_spaces(input);
     distances[i] = strtoul(input, &input, 10);
   }
-}
-
-static i64 parse_number_with_spaces(char *input, char **out) {
-  char buffer[255] = {0};
-  size_t length = 0;
-  for (u8 i = 0; i < RACES; ++i) {
-    input = skip_spaces(input);
-    while (*input != '\n' && *input != '\0' && *input != ' ')
-      buffer[length++] = *input++;
-  }
-  *out = input;
-  return strtoull(buffer, NULL, 10);
-}
-
-static void parse_part2(char *input, i64 *const time, i64 *const distance) {
-  input += 5;
-  *time = parse_number_with_spaces(input, &input);
-  input += 10;
-  *distance = parse_number_with_spaces(input, &input);
 }
 
 // x(t) = -t² + totalTime * t + 0
@@ -70,17 +50,29 @@ static i64 solve_part1(const i64 *const times, const i64 *const distances) {
   return solution;
 }
 
+static i64 combine_numbers(const i64 numbers[const RACES]) {
+  i64 result = 0, pos = 1;
+  for (i8 i = RACES - 1; i >= 0; --i) {
+    i64 current = numbers[i];
+    for (; current > 0; pos *= 10) {
+      result += (current % 10) * pos;
+      current /= 10;
+    }
+  }
+  return result;
+}
+
 int main(void) {
   char *input = aoc_file_read_all2("day06/input.txt");
   i64 times[RACES] = {0};
   i64 distances[RACES] = {0};
-  parse_part1(input, times, distances);
-  i64 time = 0;
-  i64 distance = 0;
-  parse_part2(input, &time, &distance);
+  parse(input, times, distances);
   aoc_free(input);
 
   const i64 part1 = solve_part1(times, distances);
+
+  const i64 time = combine_numbers(times);
+  const i64 distance = combine_numbers(distances);
   const i64 part2 = count_wins(time, distance);
 
   printf("%lu\n%lu\n", part1, part2);
