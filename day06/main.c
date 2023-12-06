@@ -44,9 +44,10 @@ static i64 combine_numbers(const i64 numbers[const RACES]) {
   i64 result = 0, pos = 1;
   for (i8 i = RACES - 1; i >= 0; --i) {
     i64 current = numbers[i];
-    for (; current > 0; pos *= 10) {
+    while (current > 0) {
       result += (current % 10) * pos;
       current /= 10;
+      pos *= 10;
     }
   }
   return result;
