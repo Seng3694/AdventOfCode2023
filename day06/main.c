@@ -6,41 +6,31 @@
 
 #define RACES 4
 
-static inline char *skip_spaces(char *str) {
-  while (*str == ' ')
-    str++;
-  return str;
-}
-
 static void parse(char *input, i64 times[const RACES], i64 distances[RACES]) {
   input += 5;
   for (u8 i = 0; i < RACES; ++i) {
-    input = skip_spaces(input);
+    while (*input == ' ')
+      input++;
     times[i] = strtoul(input, &input, 10);
   }
   input += 10;
   for (u8 i = 0; i < RACES; ++i) {
-    input = skip_spaces(input);
+    while (*input == ' ')
+      input++;
     distances[i] = strtoul(input, &input, 10);
   }
 }
 
-// x(t) = -t² + totalTime * t + 0
-// find both intersections with distance
-// -t² + totalTime * t = dist
-// -t² + totalTime * t - dist = 0
-// t1 = (-totalTime + sqrt(totalTime² - 4*(-1)*(-dist))) / (2 * (-1))
-// t2 = (-totalTime - sqrt(totalTime² - 4*(-1)*(-dist))) / (2 * (-1))
-static inline i64 first_win(const i64 totalTime, const i64 distance) {
-  return (-totalTime + sqrt((totalTime * totalTime) - (4 * distance))) / -2;
+static inline i64 first_win(const i64 t, const i64 x) {
+  return (i64)(floor((-t + sqrt((t * t) - (4 * x))) / -2) + 1);
 }
 
-static inline i64 last_win(const i64 totalTime, const i64 distance) {
-  return (-totalTime - sqrt((totalTime * totalTime) - (4 * distance))) / -2;
+static inline i64 last_win(const i64 t, const i64 x) {
+  return (i64)(ceil((-t - sqrt((t * t) - (4 * x))) / -2) - 1);
 }
 
-static inline i64 count_wins(const i64 time, const i64 distance) {
-  return last_win(time, distance) - first_win(time, distance);
+static inline i64 count_wins(const i64 t, const i64 x) {
+  return last_win(t, x) - first_win(t, x) + 1;
 }
 
 static i64 solve_part1(const i64 *const times, const i64 *const distances) {
@@ -70,7 +60,6 @@ int main(void) {
   aoc_free(input);
 
   const i64 part1 = solve_part1(times, distances);
-
   const i64 time = combine_numbers(times);
   const i64 distance = combine_numbers(distances);
   const i64 part2 = count_wins(time, distance);
