@@ -6,19 +6,18 @@
 
 #define RACES 4
 
+static char *parse_numbers(char *line, i64 numbers[const RACES]) {
+  for (u8 i = 0; i < RACES; ++i) {
+    while (*line == ' ')
+      line++;
+    numbers[i] = strtoul(line, &line, 10);
+  }
+  return line;
+}
+
 static void parse(char *input, i64 times[const RACES], i64 distances[RACES]) {
-  input += 5;
-  for (u8 i = 0; i < RACES; ++i) {
-    while (*input == ' ')
-      input++;
-    times[i] = strtoul(input, &input, 10);
-  }
-  input += 10;
-  for (u8 i = 0; i < RACES; ++i) {
-    while (*input == ' ')
-      input++;
-    distances[i] = strtoul(input, &input, 10);
-  }
+  input = parse_numbers(input + 5, times);
+  input = parse_numbers(input + 10, distances);
 }
 
 static inline i64 first_win(const i64 t, const i64 x) {
