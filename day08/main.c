@@ -14,14 +14,14 @@ typedef enum {
 } node_type;
 
 typedef struct {
-  u32 id;
+  u16 id;
   node_type type;
   union {
     struct {
-      u32 left;
-      u32 right;
+      u16 left;
+      u16 right;
     };
-    u32 data[2];
+    u16 data[2];
   };
 } node;
 
@@ -35,7 +35,7 @@ static inline bool string_equals(const string *const a, const string *const b) {
 }
 
 #define AOC_KEY_T string
-#define AOC_VALUE_T u32
+#define AOC_VALUE_T u16
 #define AOC_KEY_T_EMPTY ((string){"000"})
 #define AOC_KEY_T_HASH(x) aoc_string_hash1(*x, 3)
 #define AOC_KEY_T_EQUALS string_equals
@@ -43,21 +43,21 @@ static inline bool string_equals(const string *const a, const string *const b) {
 #include <aoc/map.h>
 
 typedef struct {
-  u32 current;
-  aoc_map_string_u32 ids;
+  u16 current;
+  aoc_map_string_u16 ids;
   aoc_vector_u8 *directions;
   aoc_vector_node *nodes;
 } parsing_context;
 
-static u32 resolve_id(char *input, parsing_context *const ctx) {
+static u16 resolve_id(char *input, parsing_context *const ctx) {
   const u32 hash = aoc_string_hash1(input, 3);
-  u32 id = 0;
-  if (!aoc_map_string_u32_contains_pre_hashed(&ctx->ids, input, hash)) {
+  u16 id = 0;
+  if (!aoc_map_string_u16_contains_pre_hashed(&ctx->ids, input, hash)) {
     id = ctx->current;
-    aoc_map_string_u32_insert_pre_hashed(&ctx->ids, input, ctx->current++,
+    aoc_map_string_u16_insert_pre_hashed(&ctx->ids, input, ctx->current++,
                                          hash);
   } else {
-    aoc_map_string_u32_get_pre_hashed(&ctx->ids, input, &id, hash);
+    aoc_map_string_u16_get_pre_hashed(&ctx->ids, input, &id, hash);
   }
   return id;
 }
@@ -70,12 +70,12 @@ static void parse(char *input, parsing_context *const ctx) {
   input += 2;
 
   while (*input != '\0') {
-    const u32 from = resolve_id(input, ctx);
+    const u16 from = resolve_id(input, ctx);
     const node_type type = input[2] == 'A'   ? NODE_TYPE_START
                            : input[2] == 'Z' ? NODE_TYPE_DESTINATION
                                              : NODE_TYPE_NORMAL;
-    const u32 left = resolve_id(input + 7, ctx);
-    const u32 right = resolve_id(input + 12, ctx);
+    const u16 left = resolve_id(input + 7, ctx);
+    const u16 right = resolve_id(input + 12, ctx);
     aoc_vector_node_ensure_capacity(ctx->nodes, from + 1);
     node n = {.id = from, .left = left, .right = right, .type = type};
     ctx->nodes->items[from] = n;
@@ -84,7 +84,7 @@ static void parse(char *input, parsing_context *const ctx) {
   }
 }
 
-static u32 solve_part1(const u32 start, const u32 dest,
+static u32 solve_part1(const u16 start, const u16 dest,
                        const aoc_vector_u8 *const directions,
                        const aoc_vector_node *const nodes) {
   u32 solution = 0;
@@ -135,7 +135,7 @@ static u64 solve_part2(const aoc_vector_u8 *const directions,
 
 int main(void) {
   aoc_bump bump = {0};
-  aoc_bump_init(&bump, 38000);
+  aoc_bump_init(&bump, 1 << 15);
   aoc_allocator allocator = aoc_bump_create_allocator(&bump);
   aoc_set_allocator(&allocator);
 
@@ -145,23 +145,23 @@ int main(void) {
   aoc_vector_u8_create(&directions, 300);
   aoc_vector_node_create(&nodes, 700);
   parsing_context ctx = {.directions = &directions, .nodes = &nodes};
-  aoc_map_string_u32_create(&ctx.ids, 1 << 10);
+  aoc_map_string_u16_create(&ctx.ids, 1 << 10);
 
   parse(input, &ctx);
-  u32 start, dest;
-  aoc_map_string_u32_get(&ctx.ids, "AAA", &start);
-  aoc_map_string_u32_get(&ctx.ids, "ZZZ", &dest);
+  u16 start, dest;
+  aoc_map_string_u16_get(&ctx.ids, "AAA", &start);
+  aoc_map_string_u16_get(&ctx.ids, "ZZZ", &dest);
 
   const u32 part1 = solve_part1(start, dest, &directions, &nodes);
 
   aoc_vector_node startingPoints = {0};
   aoc_vector_node_create(&startingPoints, 10);
 
-  aoc_map_iter_string_u32 iter = {0};
-  aoc_map_iter_string_u32_init(&iter, &ctx.ids);
+  aoc_map_iter_string_u16 iter = {0};
+  aoc_map_iter_string_u16_init(&iter, &ctx.ids);
   string s;
-  u32 id;
-  while (aoc_map_string_u32_iterate(&iter, &s, &id)) {
+  u16 id;
+  while (aoc_map_string_u16_iterate(&iter, &s, &id)) {
     if (nodes.items[id].type == NODE_TYPE_START)
       aoc_vector_node_push(&startingPoints, nodes.items[id]);
   }
