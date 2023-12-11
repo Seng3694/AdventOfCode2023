@@ -122,103 +122,20 @@ static u32 solve_part1(map *const m) {
   return (length >> 1) + (length & 1);
 }
 
-static const u8 upscale_map[][9] = {
-    [TILE_GROUND] = {0, 0, 0, 0, 0, 0, 0, 0, 0},
-    [TILE_VERTICAL] = {0, 1, 0, 0, 1, 0, 0, 1, 0},
-    [TILE_HORIZONTAL] = {0, 0, 0, 1, 1, 1, 0, 0, 0},
-    [TILE_TL] = {0, 0, 0, 0, 1, 1, 0, 1, 0},
-    [TILE_TR] = {0, 0, 0, 1, 1, 0, 0, 1, 0},
-    [TILE_BR] = {0, 1, 0, 1, 1, 0, 0, 0, 0},
-    [TILE_BL] = {0, 1, 0, 0, 1, 1, 0, 0, 0},
-};
-
-typedef struct {
-  u32 x;
-  u32 y;
-} point;
-
-#define AOC_T point
-#include <aoc/vector.h>
-
 static u32 solve_part2(const map *const m) {
   u32 solution = 0;
-  const u32 size = m->realSize * 3;
-  u8 *stretchedMap = aoc_calloc(1, size * size * sizeof(u8));
-
-  // scale map up by 3 in each direction and interpolate pipe pieces
   for (u8 y = 0; y < m->realSize; ++y) {
+    u8 count = 0;
     for (u8 x = 0; x < m->realSize; ++x) {
-      const u32 from = y * m->realSize + x;
-      const tile_type t = m->data[from].type;
-      if (!m->data[from].partOfLoop)
-        continue;
-      for (u8 ys = 0; ys < 3; ++ys) {
-        for (u8 xs = 0; xs < 3; ++xs) {
-          const u32 to = (y * 3) * size + (x * 3) + ys * size + xs;
-          stretchedMap[to] = upscale_map[t][ys * 3 + xs];
-        }
+      const tile t = m->data[y * m->realSize + x];
+      if (t.partOfLoop) {
+        count +=
+            (t.type == TILE_VERTICAL || t.type == TILE_BL || t.type == TILE_BR);
+      } else {
+        solution += count & 1;
       }
     }
   }
-
-  // flood fill
-  // fill outer border to avoid bounds checks
-  for (u32 i = 0; i < size; ++i) {
-    stretchedMap[i] = 1;
-    stretchedMap[(size * (size - 1)) + i] = 1;
-    stretchedMap[i * size] = 1;
-    stretchedMap[i * size + size - 1] = 1;
-  }
-  aoc_vector_point points = {0};
-  aoc_vector_point_create(&points, 512);
-
-  aoc_vector_point_push(&points, (point){1, 1});
-
-  while (points.length > 0) {
-    const size_t len = points.length;
-    for (size_t i = 0; i < len; ++i) {
-      point p = points.items[i];
-      const u32 index = p.y * size + p.x;
-      if (stretchedMap[index - 1] == 0) {
-        stretchedMap[index - 1] = 1;
-        aoc_vector_point_push(&points, (point){p.x - 1, p.y});
-      }
-      if (stretchedMap[index + 1] == 0) {
-        stretchedMap[index + 1] = 1;
-        aoc_vector_point_push(&points, (point){p.x + 1, p.y});
-      }
-      if (stretchedMap[index - size] == 0) {
-        stretchedMap[index - size] = 1;
-        aoc_vector_point_push(&points, (point){p.x, p.y - 1});
-      }
-      if (stretchedMap[index + size] == 0) {
-        stretchedMap[index + size] = 1;
-        aoc_vector_point_push(&points, (point){p.x, p.y + 1});
-      }
-    }
-    const size_t newLength = points.length - len;
-    for (size_t k = 0; k < newLength; ++k)
-      points.items[k] = points.items[len + k];
-    points.length = newLength;
-  }
-
-  // go through all original indices and count the corresponding 9 "pixels" in
-  // the scaled version. if the count is 0 add it to the solution
-  for (u8 y = 0; y < m->realSize; ++y) {
-    for (u8 x = 0; x < m->realSize; ++x) {
-      u8 count = 0;
-      for (u8 ys = 0; ys < 3; ++ys) {
-        for (u8 xs = 0; xs < 3; ++xs) {
-          const u32 index = (y * 3) * size + (x * 3) + ys * size + xs;
-          count += stretchedMap[index];
-        }
-      }
-      solution += count == 0;
-    }
-  }
-
-  aoc_vector_point_destroy(&points);
-  aoc_free(stretchedMap);
   return solution;
 }
 
